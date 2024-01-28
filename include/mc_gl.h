@@ -5,9 +5,6 @@
 #define X_AXIS (vec3s){ 1.0f, 0.0f, 0.0f }
 #define Y_AXIS (vec3s){ 0.0f, 1.0f, 0.0f }
 #define Z_AXIS (vec3s){ 0.0f, 0.0f, 1.0f }
-#define NEAR_PLANE 0.1f
-#define FAR_PLANE 300.0f
-#define GRAVITY 0.01f
 
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 900

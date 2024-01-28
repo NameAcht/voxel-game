@@ -6,8 +6,9 @@
 // fps style cam
 void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 	cam->speed = 2.5f * frameDelta;
+	
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-		cam->speed *= 1.5f;
+		cam->speed *= 1.75f;
 	if (glfwGetKey(window, GLFW_KEY_W))
 		cam_moveForward(cam);
 	if (glfwGetKey(window, GLFW_KEY_S))
@@ -30,18 +31,26 @@ void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 // cam utils
 
 void cam_moveForward(Camera* cam) {
-	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale((vec3s) { cam->front.x, 0.0f, cam->front.z }, cam->speed));
+	vec3s toScale = { cam->front.x, 0.0f, cam->front.z };
+	toScale = glms_vec3_normalize(toScale);
+	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale(toScale, cam->speed));
 }
 void cam_moveBackward(Camera* cam) {
-	cam->pos = glms_vec3_sub(cam->pos, glms_vec3_scale((vec3s) { cam->front.x, 0.0f, cam->front.z }, cam->speed));
+	vec3s toScale = { cam->front.x, 0.0f, cam->front.z };
+	toScale = glms_vec3_normalize(toScale);
+	cam->pos = glms_vec3_sub(cam->pos, glms_vec3_scale(toScale, cam->speed));
 }
 void cam_moveRight(Camera* cam) {
-	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale(glms_normalize(glms_cross(cam->front, cam->up)), cam->speed));
+	vec3s toScale = { cam->right.x, 0.0f, cam->right.z };
+	toScale = glms_vec3_normalize(toScale);
+	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale(toScale, cam->speed));
 }
 void cam_moveLeft(Camera* cam) {
-	cam->pos = glms_vec3_sub(cam->pos, glms_vec3_scale(glms_normalize(glms_cross(cam->front, cam->up)), cam->speed));
+	vec3s toScale = { cam->right.x, 0.0f, cam->right.z };
+	toScale = glms_vec3_normalize(toScale);
+	cam->pos = glms_vec3_sub(cam->pos, glms_vec3_scale(toScale, cam->speed));
 }
-void cam_updateMouse(Camera* cam) {
+void cam_updateVectors(Camera* cam) {
 	float xRota = glm_rad(cam->pitch);
 	float yRota = glm_rad(cam->yaw);
 	vec3s direction = {
@@ -50,6 +59,7 @@ void cam_updateMouse(Camera* cam) {
 		.z = sin(yRota) * cos(xRota)
 	};
 	cam->front = glms_normalize(direction);
+	cam->right = glms_normalize(glms_cross(cam->front, cam->worldUp));
 }
 bool cam_isOnFloor(Camera* cam) {
 	if (cam->pos.y <= 1.0f)
@@ -58,5 +68,5 @@ bool cam_isOnFloor(Camera* cam) {
 }
 void cam_jump(Camera* cam) {
 	if(cam_isOnFloor(cam))
-		cam->yVelocity = 0.18f;
+		cam->yVelocity = JUMP_VELOCITY;
 }

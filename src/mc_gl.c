@@ -27,7 +27,9 @@ Camera cam = {
 	.lastMouseX = 300.0f,
 	.lastMouseY = 400.0f,
 	.firstMouse = true,
-	.yVelocity = 0.0f
+	.yVelocity = 0.0f,
+	.worldUp = { 0.0f, 1.0f, 0.0f },
+	.right = { 1.0f, 0.0f, 0.0f }
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +79,7 @@ void processInput(GLFWwindow* window, float frameDelta) {
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 		cam_jump(&cam);
 	cam_updatePos(&cam, window, frameDelta);
-	cam_updateMouse(&cam);
+	cam_updateVectors(&cam);
 }
 GLFWwindow* initWindow(int width, int height) {
 	// glfw
@@ -88,8 +90,7 @@ GLFWwindow* initWindow(int width, int height) {
 
 	// create window object
 	GLFWwindow* window = glfwCreateWindow(width, height, "GL MC", NULL, NULL);
-	if (window == NULL)
-	{
+	if (window == NULL) {
 		printf("Failed to create GLFW window\n");
 		glfwTerminate();
 		return -1;
@@ -97,8 +98,7 @@ GLFWwindow* initWindow(int width, int height) {
 	glfwMakeContextCurrent(window);
 
 	// glad
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		printf("Failed to initialize GLAD\n");
 		return -1;
 	}
@@ -141,7 +141,7 @@ void textureRectanglePointerArithmetic() {
 	glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 }
-unsigned int genBindStdTexture(char* imgData, int width, int height) {
+unsigned int genBindStdTexture(char* imgData, int width, int height, int nrChannels) {
 	unsigned int texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -152,7 +152,11 @@ unsigned int genBindStdTexture(char* imgData, int width, int height) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// create texture and free data
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData);
+	// RGB for 3 channels and RGBA for 4 channels
+	if(nrChannels == 3)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData);
+	else if(nrChannels == 4)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	free(imgData);
 	return texture;
@@ -166,7 +170,7 @@ float updateFrameDelta(float* lastFrame) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-// Test Programs
+// Main function
 
 void mc_gl() {
 	GLFWwindow* window = initWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -202,15 +206,15 @@ void mc_gl() {
 	unsigned int grassTopW, grassTopH, grassTopChannels;
 	unsigned int grassSideW, grassSideH, grassSideChannels;
 	byte* imgDejavu = stbi_load("images\\dejavu.jpg", &dejavuW, &dejavuH, &dejavuChannels, 0);
-	byte* imgGrassTop = stbi_load("images\\grass.jpg", &grassTopW, &grassTopH, &grassTopChannels, 0);
+	byte* imgGrassTop = stbi_load("images\\grass.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
 	byte* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
 	if (!imgDejavu || !imgGrassTop || !imgGrassSide) {
 		printf("Could not load image.");
 		return;
 	}
-	unsigned int dejavuTex = genBindStdTexture(imgDejavu, dejavuW, dejavuH);
-	unsigned int grassTopTex = genBindStdTexture(imgGrassTop, grassTopW, grassTopH);
-	unsigned int grassSideTex = genBindStdTexture(imgGrassSide, grassSideW, grassSideH);
+	unsigned int dejavuTex = genBindStdTexture(imgDejavu, dejavuW, dejavuH, dejavuChannels);
+	unsigned int grassTopTex = genBindStdTexture(imgGrassTop, grassTopW, grassTopH, grassTopChannels);
+	unsigned int grassSideTex = genBindStdTexture(imgGrassSide, grassSideW, grassSideH, grassSideChannels);
 
 	// uniform locations
 	unsigned int mvpLoc = glGetUniformLocation(planeProgram, "mvp");
@@ -226,12 +230,14 @@ void mc_gl() {
 		float frameDelta = updateFrameDelta(&lastFrame);
 		processInput(window, frameDelta);
 
+		//printf("%f\t%f\t%f\n", cam.front.x, cam.front.y, cam.front.z);
+
 		// update color
 		glClearColor(0.1f, 0.4f, 0.55f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// mvp
-		mat4s model = glms_mat4_identity();
+		mat4s model = glms_translate_make((vec3s) { -10.0f, -1.0f, -10.0f });
 		mat4s view = glms_lookat(cam.pos, glms_vec3_add(cam.pos, cam.front), cam.up);
 		mat4s perspective = glms_perspective(glm_rad(cam.fov), WINDOW_WIDTH / WINDOW_HEIGHT, NEAR_PLANE, FAR_PLANE);
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
@@ -243,17 +249,16 @@ void mc_gl() {
 		glBindVertexArray(VAOcube);
 		glDrawArrays(GL_TRIANGLES, 0, cubeVertexCount);
 
-		// plane
-		glUseProgram(planeProgram);
-		glBindTexture(GL_TEXTURE_2D, grassTopTex);
-		glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
-		glBindVertexArray(VAOxzplane);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//// plane
+		//glUseProgram(planeProgram);
+		//glBindTexture(GL_TEXTURE_2D, grassTopTex);
+		//glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
+		//glBindVertexArray(VAOxzplane);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		for (size_t x = 0; x < 10; x++)	{
+		for (int x = 0; x < 20; x++)	{
 			mvp = glms_translate(mvp, (vec3s) { 1.0f, 0.0f, 0.0f });
-			int z = 0;
-			for (; z < 10; z++) {
+			for (int z = 0; z < 20; z++) {
 				mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, 1.0f });
 				// grass cube
 				glUseProgram(cubeProgram);
@@ -262,7 +267,7 @@ void mc_gl() {
 				glBindVertexArray(VAOcube);
 				glDrawArrays(GL_TRIANGLES, 0, cubeVertexCount);
 			}
-			mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, -z });
+			mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, -20.0f });
 		}
 
 		glfwPollEvents();
