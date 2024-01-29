@@ -168,6 +168,12 @@ float updateFrameDelta(float* lastFrame) {
 	*lastFrame = currFrame;
 	return deltaTime;
 }
+void setStdCubePointerArithmetic() {
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 // Main function
@@ -188,36 +194,26 @@ void mc_gl() {
 
 	// cube
 	unsigned int VAOcube = genBindVAO(VBOs[0], cubeVertices, sizeof(cubeVertices));
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	setStdCubePointerArithmetic();
 
-	// xzPlane
-	unsigned int VAOxzplane = genBindVAO(VBOs[1], xzPlaneTexVertices, sizeof(xzPlaneTexVertices));
-	textureRectanglePointerArithmetic();
-
-	unsigned int planeProgram = buildShaderProgram("render_rectangle_3d.vert", "render_rectangle_3d.frag");
 	unsigned int cubeProgram = buildShaderProgram("spin_cube_mvp.vert", "spin_cube.frag");
 
 	// textures
 	stbi_set_flip_vertically_on_load(true);
-	unsigned int dejavuW, dejavuH, dejavuChannels;
 	unsigned int grassTopW, grassTopH, grassTopChannels;
 	unsigned int grassSideW, grassSideH, grassSideChannels;
-	byte* imgDejavu = stbi_load("images\\dejavu.jpg", &dejavuW, &dejavuH, &dejavuChannels, 0);
-	byte* imgGrassTop = stbi_load("images\\grass.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
+	byte* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
 	byte* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
-	if (!imgDejavu || !imgGrassTop || !imgGrassSide) {
+	if (!imgGrassTop || !imgGrassSide) {
 		printf("Could not load image.");
 		return;
 	}
-	unsigned int dejavuTex = genBindStdTexture(imgDejavu, dejavuW, dejavuH, dejavuChannels);
 	unsigned int grassTopTex = genBindStdTexture(imgGrassTop, grassTopW, grassTopH, grassTopChannels);
 	unsigned int grassSideTex = genBindStdTexture(imgGrassSide, grassSideW, grassSideH, grassSideChannels);
 
 	// uniform locations
-	unsigned int mvpLoc = glGetUniformLocation(planeProgram, "mvp");
+	unsigned int mvpLoc = glGetUniformLocation(cubeProgram, "mvp");
+	unsigned int textureSide = glGetUniformLocation(cubeProgram, "textureSide");
 
 	// z buffer
 	glEnable(GL_DEPTH_TEST);
@@ -230,8 +226,6 @@ void mc_gl() {
 		float frameDelta = updateFrameDelta(&lastFrame);
 		processInput(window, frameDelta);
 
-		//printf("%f\t%f\t%f\n", cam.front.x, cam.front.y, cam.front.z);
-
 		// update color
 		glClearColor(0.1f, 0.4f, 0.55f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -242,30 +236,21 @@ void mc_gl() {
 		mat4s perspective = glms_perspective(glm_rad(cam.fov), WINDOW_WIDTH / WINDOW_HEIGHT, NEAR_PLANE, FAR_PLANE);
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
 
-		// cube
-		glUseProgram(cubeProgram);
-		glBindTexture(GL_TEXTURE_2D, dejavuTex);
-		glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
-		glBindVertexArray(VAOcube);
-		glDrawArrays(GL_TRIANGLES, 0, cubeVertexCount);
-
-		//// plane
-		//glUseProgram(planeProgram);
-		//glBindTexture(GL_TEXTURE_2D, grassTopTex);
-		//glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
-		//glBindVertexArray(VAOxzplane);
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
-
 		for (int x = 0; x < 20; x++)	{
 			mvp = glms_translate(mvp, (vec3s) { 1.0f, 0.0f, 0.0f });
 			for (int z = 0; z < 20; z++) {
 				mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, 1.0f });
-				// grass cube
-				glUseProgram(cubeProgram);
-				glBindTexture(GL_TEXTURE_2D, grassSideTex);
-				glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
-				glBindVertexArray(VAOcube);
-				glDrawArrays(GL_TRIANGLES, 0, cubeVertexCount);
+				for (int side = 0; side < 6; side++) {
+					glUseProgram(cubeProgram);
+					if (side == UP)
+						glBindTexture(GL_TEXTURE_2D, grassTopTex);
+					else
+						glBindTexture(GL_TEXTURE_2D, grassSideTex);
+					glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
+					glBindVertexArray(VAOcube);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices) / 6, cubeVertices + 30 * side, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLES, 0, 6);
+				}
 			}
 			mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, -20.0f });
 		}
