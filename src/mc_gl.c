@@ -22,7 +22,7 @@ Camera cam = {
 	.speed = 2.5f,
 	.pitch = 0.0f,
 	.yaw = -90.0f,
-	.fov = 75.0f,
+	.fov = 95.0f,
 	.sens = 0.1f,
 	.lastMouseX = 300.0f,
 	.lastMouseY = 400.0f,
@@ -31,12 +31,16 @@ Camera cam = {
 	.worldUp = { 0.0f, 1.0f, 0.0f },
 	.right = { 1.0f, 0.0f, 0.0f }
 };
+float g_width = WINDOW_WIDTH;
+float g_height = WINDOW_HEIGHT;
 
 /////////////////////////////////////////////////////////////////////////////////
 // Callbacks
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+	g_width = width;
+	g_height = height;
 }
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	if (cam.firstMouse) {
@@ -64,10 +68,10 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 }
 void scrollCallBack(GLFWwindow* window, double xoffset, double yoffset) {
 	cam.fov -= (float)yoffset;
-	if (cam.fov < 45.0f)
-		cam.fov = 45.0f;
-	if (cam.fov > 120.0f)
-		cam.fov = 120.0f;
+	if (cam.fov < FOV_MIN)
+		cam.fov = FOV_MIN;
+	if (cam.fov > FOV_MAX)
+		cam.fov = FOV_MAX;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -153,9 +157,9 @@ unsigned int genBindStdTexture(char* imgData, int width, int height, int nrChann
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// create texture and free data
 	// RGB for 3 channels and RGBA for 4 channels
-	if(nrChannels == 3)
+	if (nrChannels == 3)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData);
-	else if(nrChannels == 4)
+	else if (nrChannels == 4)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	free(imgData);
@@ -173,6 +177,35 @@ void setStdCubePointerArithmetic() {
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+// Draws
+
+// 0 -> front
+// 1 -> back
+// 2 -> left
+// 3 -> right
+// 4 -> down
+// 5 -> up
+void drawFullCube(unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
+	glUseProgram(program);
+	glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw); 
+	glBindVertexArray(VAOcube);
+	for (size_t i = 0; i < 6; i++) {
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices) / 6, cubeVertices + 30 * i, GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+	glUseProgram(0);
+}
+void drawFullCubes(vec3s cubes[], size_t cubeLen, unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
+	// translate by position, then negate back to start
+	mat4s start = mvp;
+	for (size_t i = 0; i < cubeLen; i++) {
+		mvp = glms_translate(start, cubes[i]);
+		drawFullCube(textures, program, mvp, mvpLoc, VAOcube);
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -202,14 +235,17 @@ void mc_gl() {
 	stbi_set_flip_vertically_on_load(true);
 	unsigned int grassTopW, grassTopH, grassTopChannels;
 	unsigned int grassSideW, grassSideH, grassSideChannels;
+	unsigned int dirtW, dirtH, dirtChannels;
 	byte* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
 	byte* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
-	if (!imgGrassTop || !imgGrassSide) {
+	byte* imgDirt = stbi_load("images\\dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
+	if (!imgGrassTop || !imgGrassSide || !imgDirt) {
 		printf("Could not load image.");
 		return;
 	}
 	unsigned int grassTopTex = genBindStdTexture(imgGrassTop, grassTopW, grassTopH, grassTopChannels);
 	unsigned int grassSideTex = genBindStdTexture(imgGrassSide, grassSideW, grassSideH, grassSideChannels);
+	unsigned int dirtTex = genBindStdTexture(imgDirt, dirtW, dirtH, dirtChannels);
 
 	// uniform locations
 	unsigned int mvpLoc = glGetUniformLocation(cubeProgram, "mvp");
@@ -220,6 +256,14 @@ void mc_gl() {
 
 	// render variables
 	float lastFrame = 0.0f;
+	unsigned int grassTextures[6] = {
+		grassSideTex,
+		grassSideTex,
+		grassSideTex,
+		grassSideTex,
+		dirtTex,
+		grassTopTex
+	};
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -231,33 +275,20 @@ void mc_gl() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// mvp
-		mat4s model = glms_translate_make((vec3s) { -10.0f, -1.0f, -10.0f });
+		mat4s model = glms_translate_make((vec3s) { -5.0f, -1.0f, -5.0f });
 		mat4s view = glms_lookat(cam.pos, glms_vec3_add(cam.pos, cam.front), cam.up);
-		mat4s perspective = glms_perspective(glm_rad(cam.fov), WINDOW_WIDTH / WINDOW_HEIGHT, NEAR_PLANE, FAR_PLANE);
+		mat4s perspective = glms_perspective(glm_rad(cam.fov), g_width / g_height, NEAR_PLANE, FAR_PLANE);
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
 
-		for (int x = 0; x < 20; x++)	{
-			mvp = glms_translate(mvp, (vec3s) { 1.0f, 0.0f, 0.0f });
-			for (int z = 0; z < 20; z++) {
-				mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, 1.0f });
-				for (int side = 0; side < 6; side++) {
-					glUseProgram(cubeProgram);
-					if (side == UP)
-						glBindTexture(GL_TEXTURE_2D, grassTopTex);
-					else
-						glBindTexture(GL_TEXTURE_2D, grassSideTex);
-					glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw);
-					glBindVertexArray(VAOcube);
-					glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices) / 6, cubeVertices + 30 * side, GL_STATIC_DRAW);
-					glDrawArrays(GL_TRIANGLES, 0, 6);
-				}
-			}
-			mvp = glms_translate(mvp, (vec3s) { 0.0f, 0.0f, -20.0f });
-		}
+		// cubes example
+		vec3s cubes[100];
+		for (int x = 0; x < 10; x++)
+			for (int z = 0; z < 10; z++)
+				cubes[10*x + z] = (vec3s){ x, 0.0f, z };
+		drawFullCubes(cubes, 100, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
-
 		Sleep(1);
 	}
 

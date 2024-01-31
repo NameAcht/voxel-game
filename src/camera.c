@@ -30,6 +30,11 @@ void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // cam utils
 
+void cam_moveForwardFly(Camera* cam) {
+	vec3s toScale = { cam->front.x, cam->front.y, cam->front.z };
+	toScale = glms_vec3_normalize(toScale);
+	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale(toScale, cam->speed));
+}
 void cam_moveForward(Camera* cam) {
 	vec3s toScale = { cam->front.x, 0.0f, cam->front.z };
 	toScale = glms_vec3_normalize(toScale);

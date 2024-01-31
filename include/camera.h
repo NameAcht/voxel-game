@@ -8,6 +8,8 @@
 #define GRAVITY 0.01f
 #define NEAR_PLANE 0.1f
 #define FAR_PLANE 100.0f
+#define FOV_MIN 30.0f
+#define FOV_MAX 150.0f
 
 enum Side {
 	FRONT,
