@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stb_image.h>
-#include <Windows.h>
 #include <cglm/struct.h>
 #include <camera.h>
 
@@ -173,9 +172,9 @@ float updateFrameDelta(float* lastFrame) {
 	return deltaTime;
 }
 void setStdCubePointerArithmetic() {
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), 0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 }
 
@@ -236,9 +235,9 @@ void mc_gl() {
 	unsigned int grassTopW, grassTopH, grassTopChannels;
 	unsigned int grassSideW, grassSideH, grassSideChannels;
 	unsigned int dirtW, dirtH, dirtChannels;
-	byte* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
-	byte* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
-	byte* imgDirt = stbi_load("images\\dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
+	char* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
+	char* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
+	char* imgDirt = stbi_load("images\\dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
 	if (!imgGrassTop || !imgGrassSide || !imgDirt) {
 		printf("Could not load image.");
 		return;
@@ -283,9 +282,13 @@ void mc_gl() {
 		// cubes example
 		vec3s cubes[100];
 		for (int x = 0; x < 10; x++)
-			for (int z = 0; z < 10; z++)
-				cubes[10*x + z] = (vec3s){ x, 0.0f, z };
+			for (int y = 0; y < 10; y++)
+				cubes[10*x + y] = (vec3s){ x, y, 0.0f };
 		drawFullCubes(cubes, 100, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+
+		for (int y = 0; y < 10; y++) {
+			
+		}
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

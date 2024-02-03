@@ -16,7 +16,7 @@ unsigned int genBindVAO(unsigned int VBO, float vertices[], size_t size);
 unsigned int genBindVBO(float vertices[], size_t size);
 unsigned int genBindEBO(float vertices[], unsigned int indices[], size_t iSize);
 void textureRectanglePointerArithmetic();
-unsigned int genBindStdTexture(char* imgData, int width, int height);
+unsigned int genBindStdTexture(char* imgData, int width, int height, int nrChannels);
 void mc_gl();
 
 // cube vertices

@@ -50,6 +50,7 @@ typedef struct {
 void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta);
 void cam_updateVectors(Camera* cam);
 void cam_moveForward(Camera* cam);
+void cam_moveForwardFly(Camera* cam);
 void cam_moveBackward(Camera* cam);
 void cam_moveRight(Camera* cam);
 void cam_moveLeft(Camera* cam);
