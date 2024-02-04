@@ -267,7 +267,6 @@ void mc_gl() {
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
 		float frameDelta = updateFrameDelta(&lastFrame);
-		processInput(window, frameDelta);
 
 		// update color
 		glClearColor(0.1f, 0.4f, 0.55f, 1.0f);
@@ -282,13 +281,11 @@ void mc_gl() {
 		// cubes example
 		vec3s cubes[100];
 		for (int x = 0; x < 10; x++)
-			for (int y = 0; y < 10; y++)
-				cubes[10*x + y] = (vec3s){ x, y, 0.0f };
-		drawFullCubes(cubes, 100, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+			for (int z = 0; z < 10; z++)
+				cubes[10*x + z] = (vec3s){ x, 0.0f, z };
 
-		for (int y = 0; y < 10; y++) {
-			
-		}
+		processInput(window, frameDelta);
+		drawFullCubes(cubes, 100, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
