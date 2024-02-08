@@ -264,6 +264,12 @@ void mc_gl() {
 		grassTopTex
 	};
 
+	// cubes example
+	vec3s cubes[100];
+	for (int x = 0; x < 10; x++)
+		for (int z = 0; z < 10; z++)
+			cubes[10 * x + z] = (vec3s){ x, 0.0f, z };
+
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
 		float frameDelta = updateFrameDelta(&lastFrame);
@@ -277,12 +283,6 @@ void mc_gl() {
 		mat4s view = glms_lookat(cam.pos, glms_vec3_add(cam.pos, cam.front), cam.up);
 		mat4s perspective = glms_perspective(glm_rad(cam.fov), g_width / g_height, NEAR_PLANE, FAR_PLANE);
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
-
-		// cubes example
-		vec3s cubes[100];
-		for (int x = 0; x < 10; x++)
-			for (int z = 0; z < 10; z++)
-				cubes[10*x + z] = (vec3s){ x, 0.0f, z };
 
 		processInput(window, frameDelta);
 		drawFullCubes(cubes, 100, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
