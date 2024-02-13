@@ -173,9 +173,9 @@ float updateFrameDelta(float* lastFrame) {
 	return deltaTime;
 }
 void setStdCubePointerArithmetic() {
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 }
 
@@ -190,7 +190,7 @@ void setStdCubePointerArithmetic() {
 // 5 -> up
 void drawFullCube(unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
 	glUseProgram(program);
-	glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw); 
+	glUniformMatrix4fv(mvpLoc, 1, false, &mvp.raw); 
 	glBindVertexArray(VAOcube);
 	for (size_t i = 0; i < 6; i++) {
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
@@ -223,7 +223,7 @@ void mc_gl() {
 	glfwSetScrollCallback(window, scrollCallBack);
 
 	unsigned int VBOs[2];
-	glGenBuffers(2, &VBOs);
+	glGenBuffers(2, VBOs);
 
 	// cube
 	unsigned int VAOcube = genBindVAO(VBOs[0], cubeVertices, sizeof(cubeVertices));
