@@ -10,6 +10,7 @@
 #include <stb_image.h>
 #include <cglm/struct.h>
 #include <camera.h>
+#include <Windows.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Globals
@@ -89,7 +90,7 @@ GLFWwindow* initWindow(int width, int height) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window object
 	GLFWwindow* window = glfwCreateWindow(width, height, "GL MC", NULL, NULL);
@@ -232,9 +233,9 @@ void mc_gl() {
 
 	// textures
 	stbi_set_flip_vertically_on_load(true);
-	unsigned int grassTopW, grassTopH, grassTopChannels;
-	unsigned int grassSideW, grassSideH, grassSideChannels;
-	unsigned int dirtW, dirtH, dirtChannels;
+	int grassTopW, grassTopH, grassTopChannels;
+	int grassSideW, grassSideH, grassSideChannels;
+	int dirtW, dirtH, dirtChannels;
 	char* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
 	char* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
 	char* imgDirt = stbi_load("images\\dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
