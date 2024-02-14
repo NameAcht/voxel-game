@@ -10,6 +10,7 @@
 #include <stb_image.h>
 #include <cglm/struct.h>
 #include <camera.h>
+#include <Windows.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Globals
@@ -89,21 +90,21 @@ GLFWwindow* initWindow(int width, int height) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window object
 	GLFWwindow* window = glfwCreateWindow(width, height, "GL MC", NULL, NULL);
 	if (window == NULL) {
 		printf("Failed to create GLFW window\n");
 		glfwTerminate();
-		return -1;
+		return NULL;
 	}
 	glfwMakeContextCurrent(window);
 
 	// glad
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		printf("Failed to initialize GLAD\n");
-		return -1;
+		return NULL;
 	}
 	return window;
 }
@@ -174,7 +175,7 @@ float updateFrameDelta(float* lastFrame) {
 void setStdCubePointerArithmetic() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), 0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 }
 
@@ -189,7 +190,7 @@ void setStdCubePointerArithmetic() {
 // 5 -> up
 void drawFullCube(unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
 	glUseProgram(program);
-	glUniformMatrix4fv(mvpLoc, 1, false, mvp.raw); 
+	glUniformMatrix4fv(mvpLoc, 1, false, *mvp.raw); 
 	glBindVertexArray(VAOcube);
 	for (size_t i = 0; i < 6; i++) {
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
@@ -222,7 +223,7 @@ void mc_gl() {
 	glfwSetScrollCallback(window, scrollCallBack);
 
 	unsigned int VBOs[2];
-	glGenBuffers(2, &VBOs);
+	glGenBuffers(2, VBOs);
 
 	// cube
 	unsigned int VAOcube = genBindVAO(VBOs[0], cubeVertices, sizeof(cubeVertices));
@@ -232,9 +233,9 @@ void mc_gl() {
 
 	// textures
 	stbi_set_flip_vertically_on_load(true);
-	unsigned int grassTopW, grassTopH, grassTopChannels;
-	unsigned int grassSideW, grassSideH, grassSideChannels;
-	unsigned int dirtW, dirtH, dirtChannels;
+	int grassTopW, grassTopH, grassTopChannels;
+	int grassSideW, grassSideH, grassSideChannels;
+	int dirtW, dirtH, dirtChannels;
 	char* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
 	char* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
 	char* imgDirt = stbi_load("images\\dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
