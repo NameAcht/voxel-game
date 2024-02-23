@@ -24,7 +24,7 @@ void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 
 	// y movement
 	cam->pos.y += cam->yVelocity;
-	cam->yVelocity = (cam->yVelocity - GRAVITY) * 0.98f;
+	cam->yVelocity = (cam->yVelocity - GRAVITY) * DRAG;
 	if (cam_isOnFloor(cam)) {
 		cam->pos.y = 1.0f;
 		cam->yVelocity = 0.0f;
