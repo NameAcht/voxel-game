@@ -20,12 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\camera.c" />
+    <ClCompile Include="src\chunk.c" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\mc_gl.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\shaders.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\block.h" />
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\chunk.h" />
     <ClInclude Include="include\mc_gl.h" />
