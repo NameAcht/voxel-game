@@ -266,10 +266,11 @@ void mc_gl() {
 	};
 
 	// cubes example
-	vec3s cubes[100];
-	for (int x = 0; x < 10; x++)
-		for (int z = 0; z < 10; z++)
-			cubes[10 * x + z] = (vec3s){ x, 0.0f, z };
+	vec3s cubes[16][16][16];
+	for (int x = 0; x < 16; x++)
+		for (int z = 0; z < 16; z++)
+			for (int y = -15; y <= 0; y++)
+				cubes[x][y + 15][z] = (vec3s){x, y, z};
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -286,7 +287,7 @@ void mc_gl() {
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
 
 		processInput(window, frameDelta);
-		drawFullCubes(cubes, 100, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+		drawFullCubes(cubes, 4096, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

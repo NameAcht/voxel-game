@@ -27,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\chunk.h" />
     <ClInclude Include="include\mc_gl.h" />
     <ClInclude Include="include\shaders.h" />
     <ClInclude Include="include\stb_image.h" />

@@ -13,6 +13,7 @@
     <ClInclude Include="include\shaders.h" />
     <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\chunk.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic.vert" />
