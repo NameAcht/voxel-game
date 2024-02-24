@@ -200,19 +200,23 @@ void drawFullCube(unsigned int* textures, unsigned int program, mat4s mvp, unsig
 	}
 	glUseProgram(0);
 }
-void drawCube(unsigned int* textures, Chunk* c, ivec3 pos, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
+void drawCube(unsigned int* textures, Chunk* c, ivec3s pos, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
 	glUseProgram(program);
 	glUniformMatrix4fv(mvpLoc, 1, false, *mvp.raw);
 	glBindVertexArray(VAOcube);
+	
 	for (size_t i = 0; i < 6; i++) {
 		// check adjacent side for existing cube, if null byte -> air block -> draw
 		ivec3s adj = { 0, 0, 0 };
-		glm_ivec3_add(pos, DIR_VECS[i], adj.raw);
+		glm_ivec3_add(pos.raw, DIR_VECS[i], adj.raw);
 		// !!!
 		// TODO: Fix memory unsafe adjacency checks
-		if (c->blocks[adj.x][adj.y][adj.z])
+		if (0 < pos.x && pos.x < 15 &&
+			0 < pos.y && pos.y < 15 &&
+			0 < pos.z && pos.z < 15 &&
+			c->blocks[adj.x][adj.y][adj.z])
 			continue;
-
+		
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices) / 6, cubeVertices + 30 * i, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -226,7 +230,7 @@ void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp
 			for (int z = 0; z < 16; z++) {
 				ivec3 blockPos = { 0, 0, 0 };
 				glm_ivec3_add((ivec3){ x, y, z }, c->pos.raw, blockPos);
-				drawCube(textures, c, blockPos, program, mvp, mvpLoc, VAOcube);
+				drawCube(textures, c, (ivec3s){ x, y, z }, program, mvp, mvpLoc, VAOcube);
 				mvp = glms_translate_z(mvp, 1.0f);
 			}
 			mvp = glms_translate_z(mvp, -16.0f);
@@ -302,13 +306,6 @@ void mc_gl() {
 		grassTopTex
 	};
 
-	// cubes example
-	vec3s cubes[16][16][16];
-	for (int x = 0; x < 16; x++)
-		for (int z = 0; z < 16; z++)
-			for (int y = -15; y <= 0; y++)
-				cubes[x][y + 15][z] = (vec3s){ x, y, z };
-
 	// chunk example
 	Chunk* c = malloc(sizeof(Chunk));
 	c->pos = (ivec3s){ 0, -15, 0 };
@@ -334,6 +331,8 @@ void mc_gl() {
 		processInput(window, frameDelta);
 		//drawFullCubes(cubes, CHUNK_SIZE, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
 		drawChunk(c, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+
+		printf("%f\t%f\t%f\n", cam.pos.x, cam.pos.y, cam.pos.z);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
