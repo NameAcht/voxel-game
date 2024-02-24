@@ -19,5 +19,3 @@ static ivec3 DIR_VECS[] = {
 	{  0, -1,  0  },
 	{  0,  1,  0  }
 };
-
-bool adjBlock(Chunk* c);

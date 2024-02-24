@@ -11,6 +11,9 @@
 #define FOV_MIN 30.0f
 #define FOV_MAX 150.0f
 
+// change to #define FLY_CAM to enable free flying movement
+#define FLY_CAM_
+
 enum Side {
 	FRONT,
 	BACK,
