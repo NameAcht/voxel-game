@@ -98,9 +98,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\mc-gl\include;C:\Daten\Johannes\repos\opengl-playground\opengl-playground\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\mc-gl\lib;$(LibraryPath)</LibraryPath>
-    <SourcePath>..\mc-gl\src;C:\Daten\Johannes\repos\opengl-playground\opengl-playground\src;$(SourcePath)</SourcePath>
+    <IncludePath>..\voxel-game\include;C:\Daten\Johannes\repos\opengl-playground\opengl-playground\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\voxel-game\lib;$(LibraryPath)</LibraryPath>
+    <SourcePath>..\voxel-game\src;C:\Daten\Johannes\repos\opengl-playground\opengl-playground\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\mc-gl\include;F:\repos\text-editor\text-editor\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
