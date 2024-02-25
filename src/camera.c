@@ -7,7 +7,7 @@
 void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 	cam->speed = 2.5f * frameDelta;
 	
-	vec3s moveVec = { 0.0f, 0.0f, 0.0f };
+	vec3s moveVec = {{ 0.0f, 0.0f, 0.0f }};
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
 		cam->speed *= 1.75f;
 	if (glfwGetKey(window, GLFW_KEY_W))
@@ -39,7 +39,7 @@ void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 
 vec3s cam_moveForward(Camera* cam) {
 	#ifndef FLY_CAM
-	vec3s toScale = { cam->front.x, 0.0f, cam->front.z };
+	vec3s toScale = {{ cam->front.x, 0.0f, cam->front.z }};
 	#else
 	vec3s toScale = { cam->front.x, cam->front.y, cam->front.z };
 	#endif
@@ -47,17 +47,17 @@ vec3s cam_moveForward(Camera* cam) {
 	return toScale;
 }
 vec3s cam_moveBackward(Camera* cam) {
-	vec3s toScale = { -cam->front.x, 0.0f, -cam->front.z };
+	vec3s toScale = {{ -cam->front.x, 0.0f, -cam->front.z }};
 	toScale = glms_vec3_normalize(toScale);
 	return toScale;
 }
 vec3s cam_moveRight(Camera* cam) {
-	vec3s toScale = { cam->right.x, 0.0f, cam->right.z };
+	vec3s toScale = {{ cam->right.x, 0.0f, cam->right.z }};
 	toScale = glms_vec3_normalize(toScale);
 	return toScale;
 }
 vec3s cam_moveLeft(Camera* cam) {
-	vec3s toScale = { -cam->right.x, 0.0f, -cam->right.z };
+	vec3s toScale = {{ -cam->right.x, 0.0f, -cam->right.z }};
 	toScale = glms_vec3_normalize(toScale);
 	return toScale;
 }
