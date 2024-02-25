@@ -6,6 +6,7 @@
     <ClCompile Include="src\shaders.c" />
     <ClCompile Include="src\mc_gl.c" />
     <ClCompile Include="src\camera.c" />
+    <ClCompile Include="src\chunk.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\unistd.h" />
@@ -13,6 +14,8 @@
     <ClInclude Include="include\shaders.h" />
     <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\chunk.h" />
+    <ClInclude Include="include\block.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic.vert" />
