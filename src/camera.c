@@ -20,8 +20,8 @@ void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 		moveVec = glms_vec3_add(moveVec, cam_moveLeft(cam));
 	moveVec = glms_normalize(moveVec);
 
+	#ifndef FLY_CAM
 	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale(moveVec, cam->speed));
-
 	// y movement
 	cam->pos.y += cam->yVelocity;
 	cam->yVelocity = (cam->yVelocity - GRAVITY) * DRAG;
@@ -29,13 +29,20 @@ void cam_updatePos(Camera* cam, GLFWwindow* window, float frameDelta) {
 		cam->pos.y = 1.0f;
 		cam->yVelocity = 0.0f;
 	}
+	#else
+	cam->pos = glms_vec3_add(cam->pos, glms_vec3_scale(moveVec, cam->speed));
+	#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // cam utils
 
 vec3s cam_moveForward(Camera* cam) {
+	#ifndef FLY_CAM
 	vec3s toScale = { cam->front.x, 0.0f, cam->front.z };
+	#else
+	vec3s toScale = { cam->front.x, cam->front.y, cam->front.z };
+	#endif
 	toScale = glms_vec3_normalize(toScale);
 	return toScale;
 }

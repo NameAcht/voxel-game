@@ -11,6 +11,7 @@
 #include <cglm/struct.h>
 #include <camera.h>
 #include <Windows.h>
+#include <chunk.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Globals
@@ -188,23 +189,62 @@ void setStdCubePointerArithmetic() {
 // 3 -> right
 // 4 -> down
 // 5 -> up
-void drawFullCube(unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
+void drawCube(unsigned int* textures, Chunk* c, ivec3s pos, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
 	glUseProgram(program);
-	glUniformMatrix4fv(mvpLoc, 1, false, *mvp.raw); 
+	glUniformMatrix4fv(mvpLoc, 1, false, *mvp.raw);
 	glBindVertexArray(VAOcube);
+	
 	for (size_t i = 0; i < 6; i++) {
+		// check adjacent side for existing cube
+		// if 0 byte -> air block -> draw
+		// else do not draw, because side is obscured by adjacent block
+		ivec3s adj = { 0, 0, 0 };
+		glm_ivec3_add(pos.raw, DIR_VECS[i], adj.raw);
+
+		if (0 <= adj.x && adj.x < 16 &&
+			0 <= adj.y && adj.y < 16 &&
+			0 <= adj.z && adj.z < 16 &&
+			c->blocks[adj.x][adj.y][adj.z])
+			continue;
+
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices) / 6, cubeVertices + 30 * i, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 	glUseProgram(0);
 }
-void drawFullCubes(vec3s cubes[], size_t cubeLen, unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
-	// translate by position, then negate back to start
-	mat4s start = mvp;
-	for (size_t i = 0; i < cubeLen; i++) {
-		mvp = glms_translate(start, cubes[i]);
-		drawFullCube(textures, program, mvp, mvpLoc, VAOcube);
+void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp, unsigned int mvpLoc, unsigned int VAOcube) {
+	// TODO: get texture from block ID
+	
+	// translate mvp by chunk position
+	vec3s chunkPos = { c->pos.x, c->pos.y, c->pos.z };
+	mvp = glms_translate(mvp, chunkPos);
+
+	for (int x = 0; x < 16; x++) {
+		for (int y = 0; y < 16; y++) {
+			for (int z = 0; z < 16; z++) {
+				// continue on air block
+				if (!c->blocks[x][y][z]) {
+					mvp = glms_translate_z(mvp, 1.0f);
+					continue;
+				}
+
+				ivec3 blockPos = { 0, 0, 0 };
+				// add chunk position
+				glm_ivec3_add((ivec3){ x, y, z }, c->pos.raw, blockPos);
+
+				drawCube(textures, c, (ivec3s){ x, y, z }, program, mvp, mvpLoc, VAOcube);
+				
+				// translations to move across chunk
+				mvp = glms_translate_z(mvp, 1.0f);
+			}
+			mvp = glms_translate_z(mvp, -16.0f);
+			
+			mvp = glms_translate_y(mvp, 1.0f);
+		}
+		mvp = glms_translate_y(mvp, -16.0f);
+		
+		mvp = glms_translate_x(mvp, 1.0f);
 	}
 }
 
@@ -236,9 +276,9 @@ void mc_gl() {
 	int grassTopW, grassTopH, grassTopChannels;
 	int grassSideW, grassSideH, grassSideChannels;
 	int dirtW, dirtH, dirtChannels;
-	char* imgGrassTop = stbi_load("images\\grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
-	char* imgGrassSide = stbi_load("images\\grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
-	char* imgDirt = stbi_load("images\\dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
+	char* imgGrassTop = stbi_load("images\\1_grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
+	char* imgGrassSide = stbi_load("images\\1_grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
+	char* imgDirt = stbi_load("images\\1_dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
 	if (!imgGrassTop || !imgGrassSide || !imgDirt) {
 		printf("Could not load image.");
 		return;
@@ -265,12 +305,15 @@ void mc_gl() {
 		grassTopTex
 	};
 
-	// cubes example
-	vec3s cubes[16][16][16];
+	// chunk example
+	Chunk* c = malloc(sizeof(Chunk));
+	if (!c)
+		exit(0);
+	c->pos = (ivec3s){ 0, -15, 0 };
 	for (int x = 0; x < 16; x++)
 		for (int z = 0; z < 16; z++)
-			for (int y = -15; y <= 0; y++)
-				cubes[x][y + 15][z] = (vec3s){x, y, z};
+			for (int y = 0; y < 16; y++)
+				c->blocks[x][y][z] = 1;
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -287,12 +330,15 @@ void mc_gl() {
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
 
 		processInput(window, frameDelta);
-		drawFullCubes(cubes, 4096, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+		//drawFullCubes(cubes, CHUNK_SIZE, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+		drawChunk(c, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
+
+		//printf("%f\t%f\t%f\n", cam.front.x, cam.front.y, cam.front.z);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 		Sleep(1);
 	}
-
+	free(c);
 	glfwTerminate();
 }
