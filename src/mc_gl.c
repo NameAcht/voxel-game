@@ -204,10 +204,10 @@ void drawCube(unsigned int* textures, Chunk* c, ivec3s pos, unsigned int program
 		ivec3s adj = {{ 0, 0, 0 }};
 		glm_ivec3_add(pos.raw, DIR_VECS[i], adj.raw);
 
-		if (0 <= adj.x && adj.x < 16 &&
-			0 <= adj.y && adj.y < 16 &&
-			0 <= adj.z && adj.z < 16 &&
-			c->blocks[adj.x][adj.y][adj.z])
+		if (0 <= adj.x && adj.x < CHUNK_SIZE &&
+			0 <= adj.y && adj.y < CHUNK_SIZE &&
+			0 <= adj.z && adj.z < CHUNK_SIZE &&
+			c->blocks[adj.x + CHUNK_SIZE * adj.y + CHUNK_FACE *adj.z])
 			continue;
 
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
@@ -223,11 +223,11 @@ void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp
 	vec3s chunkPos = {{ c->pos.x, c->pos.y, c->pos.z }};
 	mvp = glms_translate(mvp, chunkPos);
 
-	for (int x = 0; x < 16; x++) {
-		for (int y = 0; y < 16; y++) {
-			for (int z = 0; z < 16; z++) {
+	for (int x = 0; x < CHUNK_SIZE; x++) {
+		for (int y = 0; y < CHUNK_SIZE; y++) {
+			for (int z = 0; z < CHUNK_SIZE; z++) {
 				// continue on air block
-				if (!c->blocks[x][y][z]) {
+				if (!c->blocks[x + CHUNK_SIZE * y + CHUNK_FACE * z]) {
 					mvp = glms_translate_z(mvp, 1.0f);
 					continue;
 				}
@@ -241,11 +241,11 @@ void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp
 				// translations to move across chunk
 				mvp = glms_translate_z(mvp, 1.0f);
 			}
-			mvp = glms_translate_z(mvp, -16.0f);
+			mvp = glms_translate_z(mvp, -CHUNK_SIZE);
 			
 			mvp = glms_translate_y(mvp, 1.0f);
 		}
-		mvp = glms_translate_y(mvp, -16.0f);
+		mvp = glms_translate_y(mvp, -CHUNK_SIZE);
 		
 		mvp = glms_translate_x(mvp, 1.0f);
 	}
@@ -312,11 +312,12 @@ void mc_gl() {
 	Chunk* c = malloc(sizeof(Chunk));
 	if (!c)
 		exit(0);
-	c->pos = (ivec3s){{ 0, -15, 0 }};
-	for (int x = 0; x < 16; x++)
-		for (int z = 0; z < 16; z++)
-			for (int y = 0; y < 16; y++)
-				c->blocks[x][y][z] = 1;
+  
+	c->pos = (ivec3s){ 0, 1 - CHUNK_SIZE, 0 };
+	for (int x = 0; x < CHUNK_SIZE; x++)
+		for (int z = 0; z < CHUNK_SIZE; z++)
+			for (int y = 0; y < CHUNK_SIZE; y++)
+				c->blocks[x + CHUNK_SIZE * y + CHUNK_FACE * z] = 1;
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -333,7 +334,6 @@ void mc_gl() {
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
 
 		processInput(window, frameDelta);
-		//drawFullCubes(cubes, CHUNK_SIZE, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
 		drawChunk(c, grassTextures, cubeProgram, mvp, mvpLoc, VAOcube);
 
 		//printf("%f\t%f\t%f\n", cam.front.x, cam.front.y, cam.front.z);
