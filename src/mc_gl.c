@@ -17,9 +17,9 @@
 // Globals
 
 Camera cam = {
-	.front = { 0.0f, 0.0f, -1.0f },
-	.pos = { 0.0f, 1.0f, 3.0f },
-	.up = { 0.0f, 1.0f, 0.0f },
+	.front = {{ 0.0f, 0.0f, -1.0f }},
+	.pos = {{ 0.0f, 1.0f, 3.0f }},
+	.up = {{ 0.0f, 1.0f, 0.0f }},
 	.speed = 2.5f,
 	.pitch = 0.0f,
 	.yaw = -90.0f,
@@ -29,8 +29,8 @@ Camera cam = {
 	.lastMouseY = 400.0f,
 	.firstMouse = true,
 	.yVelocity = 0.0f,
-	.worldUp = { 0.0f, 1.0f, 0.0f },
-	.right = { 1.0f, 0.0f, 0.0f }
+	.worldUp = {{ 0.0f, 1.0f, 0.0f }},
+	.right = {{ 1.0f, 0.0f, 0.0f }}
 };
 float g_width = WINDOW_WIDTH;
 float g_height = WINDOW_HEIGHT;
@@ -38,6 +38,8 @@ float g_height = WINDOW_HEIGHT;
 /////////////////////////////////////////////////////////////////////////////////
 // Callbacks
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 	g_width = width;
@@ -74,6 +76,7 @@ void scrollCallBack(GLFWwindow* window, double xoffset, double yoffset) {
 	if (cam.fov > FOV_MAX)
 		cam.fov = FOV_MAX;
 }
+#pragma GCC diagnostic pop
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utils
@@ -198,7 +201,7 @@ void drawCube(unsigned int* textures, Chunk* c, ivec3s pos, unsigned int program
 		// check adjacent side for existing cube
 		// if 0 byte -> air block -> draw
 		// else do not draw, because side is obscured by adjacent block
-		ivec3s adj = { 0, 0, 0 };
+		ivec3s adj = {{ 0, 0, 0 }};
 		glm_ivec3_add(pos.raw, DIR_VECS[i], adj.raw);
 
 		if (0 <= adj.x && adj.x < 16 &&
@@ -217,7 +220,7 @@ void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp
 	// TODO: get texture from block ID
 	
 	// translate mvp by chunk position
-	vec3s chunkPos = { c->pos.x, c->pos.y, c->pos.z };
+	vec3s chunkPos = {{ c->pos.x, c->pos.y, c->pos.z }};
 	mvp = glms_translate(mvp, chunkPos);
 
 	for (int x = 0; x < 16; x++) {
@@ -233,7 +236,7 @@ void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp
 				// add chunk position
 				glm_ivec3_add((ivec3){ x, y, z }, c->pos.raw, blockPos);
 
-				drawCube(textures, c, (ivec3s){ x, y, z }, program, mvp, mvpLoc, VAOcube);
+				drawCube(textures, c, (ivec3s){{ x, y, z }}, program, mvp, mvpLoc, VAOcube);
 				
 				// translations to move across chunk
 				mvp = glms_translate_z(mvp, 1.0f);
@@ -309,7 +312,7 @@ void mc_gl() {
 	Chunk* c = malloc(sizeof(Chunk));
 	if (!c)
 		exit(0);
-	c->pos = (ivec3s){ 0, -15, 0 };
+	c->pos = (ivec3s){{ 0, -15, 0 }};
 	for (int x = 0; x < 16; x++)
 		for (int z = 0; z < 16; z++)
 			for (int y = 0; y < 16; y++)
@@ -324,7 +327,7 @@ void mc_gl() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// mvp
-		mat4s model = glms_translate_make((vec3s) { -5.0f, -1.0f, -5.0f });
+		mat4s model = glms_translate_make((vec3s) {{ -5.0f, -1.0f, -5.0f }});
 		mat4s view = glms_lookat(cam.pos, glms_vec3_add(cam.pos, cam.front), cam.up);
 		mat4s perspective = glms_perspective(glm_rad(cam.fov), g_width / g_height, NEAR_PLANE, FAR_PLANE);
 		mat4s mvp = glms_mul(glms_mul(perspective, view), model);
