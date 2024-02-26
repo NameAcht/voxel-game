@@ -97,7 +97,7 @@ GLFWwindow* initWindow(int width, int height) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window object
-	GLFWwindow* window = glfwCreateWindow(width, height, "GL MC", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "voxel-game", NULL, NULL);
 	if (window == NULL) {
 		printf("Failed to create GLFW window\n");
 		glfwTerminate();
@@ -169,7 +169,7 @@ unsigned int genBindStdTexture(char* imgData, int width, int height, int nrChann
 	free(imgData);
 	return texture;
 }
-float updateFrameDelta(float* lastFrame) {
+inline float updateFrameDelta(float* lastFrame) {
 	// update frame time
 	float currFrame = glfwGetTime();
 	float deltaTime = currFrame - *lastFrame;
@@ -181,6 +181,19 @@ void setStdCubePointerArithmetic() {
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+}
+inline void updateFramerate(GLFWwindow* window) {
+	static int fps = 0;
+	static float prevTime = 0.0f;
+	float currTime = glfwGetTime();
+	fps++;
+	if (currTime - prevTime >= 1.0f) {
+		prevTime++;
+		char str[6];
+		sprintf(str, "%d", fps);
+		glfwSetWindowTitle(window, str);
+		fps = 0;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -312,7 +325,6 @@ void mc_gl() {
 	Chunk* c = malloc(sizeof(Chunk));
 	if (!c)
 		exit(0);
-  
 	c->pos = (ivec3s){ 0, 1 - CHUNK_SIZE, 0 };
 	for (int x = 0; x < CHUNK_SIZE; x++)
 		for (int z = 0; z < CHUNK_SIZE; z++)
@@ -322,6 +334,7 @@ void mc_gl() {
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
 		float frameDelta = updateFrameDelta(&lastFrame);
+		updateFramerate(window);
 
 		// update color
 		glClearColor(0.1f, 0.4f, 0.55f, 1.0f);
