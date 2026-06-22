@@ -59,13 +59,13 @@ unsigned int buildShaderProgram(const char* vertFileName, const char* fragFileNa
 	// vertex shader
 	char vertPath[1024];
 	char* _ = getcwd(vertPath, 1024);
-	strcat(vertPath, "\\shaders\\");
+	strcat(vertPath, "/shaders/");
 	strcat(vertPath, vertFileName);
 
 	// fragment shader
 	char fragPath[1024];
 	_ = getcwd(fragPath, 1024);
-	strcat(fragPath, "\\shaders\\");
+	strcat(fragPath, "/shaders/");
 	strcat(fragPath, fragFileName);
 	
 	char* vertSource = readFileFromPath(vertPath);
