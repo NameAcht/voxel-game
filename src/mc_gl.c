@@ -10,9 +10,31 @@
 #include <stb_image.h>
 #include <cglm/struct.h>
 #include <camera.h>
-#include <Windows.h>
+#include <unistd.h>
 #include <chunk.h>
+#include <time.h>
+#include <errno.h>
 
+float updateFrameDelta(float* lastFrame) {
+	// update frame time
+	float currFrame = glfwGetTime();
+	float deltaTime = currFrame - *lastFrame;
+	*lastFrame = currFrame;
+	return deltaTime;
+}
+void updateFramerate(GLFWwindow* window) {
+	static int fps = 0;
+	static float prevTime = 0.0f;
+	float currTime = glfwGetTime();
+	fps++;
+	if (currTime - prevTime >= 1.0f) {
+		prevTime++;
+		char str[6];
+		sprintf(str, "%d", fps);
+		glfwSetWindowTitle(window, str);
+		fps = 0;
+	}
+}
 /////////////////////////////////////////////////////////////////////////////////
 // Globals
 
@@ -169,31 +191,11 @@ unsigned int genBindStdTexture(char* imgData, int width, int height, int nrChann
 	free(imgData);
 	return texture;
 }
-inline float updateFrameDelta(float* lastFrame) {
-	// update frame time
-	float currFrame = glfwGetTime();
-	float deltaTime = currFrame - *lastFrame;
-	*lastFrame = currFrame;
-	return deltaTime;
-}
 void setStdCubePointerArithmetic() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), 0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-}
-inline void updateFramerate(GLFWwindow* window) {
-	static int fps = 0;
-	static float prevTime = 0.0f;
-	float currTime = glfwGetTime();
-	fps++;
-	if (currTime - prevTime >= 1.0f) {
-		prevTime++;
-		char str[6];
-		sprintf(str, "%d", fps);
-		glfwSetWindowTitle(window, str);
-		fps = 0;
-	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -264,6 +266,28 @@ void drawChunk(Chunk* c, unsigned int* textures, unsigned int program, mat4s mvp
 	}
 }
 
+// https://stackoverflow.com/questions/1157209/is-there-an-alternative-sleep-function-in-c-to-milliseconds#1157217
+/* msleep(): Sleep for the requested number of milliseconds. */
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}
 /////////////////////////////////////////////////////////////////////////////////
 // Main function
 
@@ -292,9 +316,9 @@ void mc_gl() {
 	int grassTopW, grassTopH, grassTopChannels;
 	int grassSideW, grassSideH, grassSideChannels;
 	int dirtW, dirtH, dirtChannels;
-	char* imgGrassTop = stbi_load("images\\1_grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
-	char* imgGrassSide = stbi_load("images\\1_grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
-	char* imgDirt = stbi_load("images\\1_dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
+	char* imgGrassTop = stbi_load("images/1_grass_top.png", &grassTopW, &grassTopH, &grassTopChannels, 0);
+	char* imgGrassSide = stbi_load("images/1_grass_side.png", &grassSideW, &grassSideH, &grassSideChannels, 0);
+	char* imgDirt = stbi_load("images/1_dirt.png", &dirtW, &dirtH, &dirtChannels, 0);
 	if (!imgGrassTop || !imgGrassSide || !imgDirt) {
 		printf("Could not load image.");
 		return;
@@ -353,7 +377,9 @@ void mc_gl() {
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
-		Sleep(1);
+		// Darcy
+		// 1/60th of a second in nanos. Simple!
+		msleep(17);
 	}
 	free(c);
 	glfwTerminate();
